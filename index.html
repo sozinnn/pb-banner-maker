@@ -461,10 +461,10 @@ textarea.tinput:focus{border-color:var(--accent);background:var(--surface3)}
     <div class="sec">
       <div class="sec-title">배경 색상</div>
       <div class="color-pick-row">
-        <div class="color-swatch-btn" id="bgColorBtn" style="background:#F5F0E8">
-          <input type="color" id="bgColorPicker" value="#F5F0E8">
+        <div class="color-swatch-btn" id="bgColorBtn" style="background:#FFF9ED">
+          <input type="color" id="bgColorPicker" value="#FFF9ED">
         </div>
-        <input type="text" class="hex-input" id="bgHexInput" value="#F5F0E8" placeholder="#FFFFFF" maxlength="7">
+        <input type="text" class="hex-input" id="bgHexInput" value="#FFF9ED" placeholder="#FFFFFF" maxlength="7">
       </div>
     </div>
     <div class="color-scroll" id="bgColorList"></div>
@@ -832,12 +832,12 @@ const PALETTE=[
   {name:'Brown Sugar',hex:'#AA6E4A'},{name:'Gray',hex:'#B4B4B4'},
   {name:'Black',hex:'#000000'},{name:'White',hex:'#FFFFFF'},
 ];
-const BG_ALL=[{name:'Cream (기본)',hex:'#F5F0E8'},...PALETTE];
-const NBS_BG_ALL=[{name:'Orange (기본)',hex:'#FF6600'},{name:'Cream',hex:'#F5F0E8'},...PALETTE.filter(c=>c.hex!=='#FF6600')];
+const BG_ALL=[{name:'Cream (기본)',hex:'#FFF9ED'},...PALETTE];
+const NBS_BG_ALL=[{name:'Orange (기본)',hex:'#FF6600'},{name:'Cream',hex:'#FFF9ED'},...PALETTE.filter(c=>c.hex!=='#FF6600')];
 
 // ── STATE ──
 const S={
-  bg:'#F5F0E8', textColor:'#111111',
+  bg:'#FFF9ED', textColor:'#111111',
   fontSize:60, fontWeight:700, textAlign:'center',
   letterSpacing:-1, lineHeight:1.15,
   padTop:50, padSide:40,
@@ -1374,13 +1374,13 @@ function nbsSaveAs(fmt){
 
 // ── RESET ──
 qs('#resetBtn').addEventListener('click',()=>{
-  Object.assign(S,{bg:'#F5F0E8',textColor:'#1a1a1a',fontSize:60,fontWeight:700,textAlign:'center',letterSpacing:-1,lineHeight:1.15,padTop:50,padSide:40,imgSrc:null,imgW:520,imgX:0,imgY:0,zoom:1});
+  Object.assign(S,{bg:'#FFF9ED',textColor:'#1a1a1a',fontSize:60,fontWeight:700,textAlign:'center',letterSpacing:-1,lineHeight:1.15,padTop:50,padSide:40,imgSrc:null,imgW:520,imgX:0,imgY:0,zoom:1});
   qs('#inputText').value='타이틀은 여기에\n입력해주세요.';
   [['sl_fs',60],['nb_fs',60],['sl_ls',-1],['nb_ls',-1],['sl_lh',115],['nb_lh','1.15'],['sl_pt',50],['nb_pt',50],['sl_ps',40],['nb_ps',40]].forEach(([id,v])=>{const el=qs('#'+id);if(el)el.value=v;});
   qs('#zoomVal').textContent='100%';
   qsa('#weightChips .chip').forEach(b=>{b.classList.remove('on');if(b.dataset.v==='700')b.classList.add('on');});
   qsa('#alignBtns .align-btn').forEach(b=>{b.classList.remove('on');if(b.dataset.v==='center')b.classList.add('on');});
-  applyTextColor('#111111'); applyBgColor('#F5F0E8');
+  applyTextColor('#111111'); applyBgColor('#FFF9ED');
   qsa('#textSwatches .swatch').forEach(s=>s.classList.remove('on'));
   qsa('.color-row').forEach(r=>{r.classList.remove('on');if(r.querySelector('.color-row-name')?.textContent==='Cream (기본)')r.classList.add('on');});
   const ep=qs('#bImgPan'); if(ep)ep.remove();
