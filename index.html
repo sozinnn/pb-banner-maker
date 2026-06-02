@@ -1304,7 +1304,7 @@ async function squareSaveAs(fmt){
     const canvas=await html2canvas(banner,{scale:1,useCORS:true,allowTaint:true,backgroundColor:S.bg,logging:false,width:EXPORT,height:EXPORT});
     const isJpg=fmt==='jpg';
     const mime=isJpg?'image/jpeg':'image/png';
-    const dataUrl=isJpg?canvas.toDataURL(mime,0.95):canvas.toDataURL(mime);
+    const dataUrl=isJpg?canvas.toDataURL(mime,1.0):canvas.toDataURL(mime);
     const a=document.createElement('a');
     a.download='banner_1080x1080.'+(isJpg?'jpg':'png');
     a.href=dataUrl; a.click();
@@ -1363,7 +1363,7 @@ function nbsSaveAs(fmt){
     });
     const isJpg=fmt==='jpg';
     const mime=isJpg?'image/jpeg':'image/png';
-    const dataUrl=isJpg?canvas.toDataURL(mime,0.95):canvas.toDataURL(mime);
+    const dataUrl=isJpg?canvas.toDataURL(mime,1.0):canvas.toDataURL(mime);
     const a=document.createElement('a');
     a.download='naver_brand_search_'+NS.mode+'_'+EW+'x'+EH+'.'+(isJpg?'jpg':'png');
     a.href=dataUrl;
@@ -1673,7 +1673,7 @@ async function nbsSave(){
     });
     const a=document.createElement('a');
     a.download='naver_brand_search_'+NS.mode+'_'+cfg.w+'x'+cfg.h+'.png';
-    a.href=canvas.toDataURL('image/png'); a.click();
+    a.href=canvas.toDataURL('image/png',1.0); a.click();
     toast('✅ 저장 완료! ('+cfg.label+')');
   }catch(e){toast('❌ 저장 중 오류');console.error(e);}
 
@@ -2167,7 +2167,7 @@ async function signSavePDF(){
   await new Promise(r=>setTimeout(r,120));
   try{
     const canvas=await html2canvas(offscreen,{scale:1,useCORS:true,allowTaint:true,backgroundColor:SIGN.bg,logging:false,width:EW,height:EH,x:0,y:0,scrollX:0,scrollY:0});
-    const imgData=canvas.toDataURL('image/jpeg',0.95);
+    const imgData=canvas.toDataURL('image/jpeg',1.0);
     const isLandscape=SIGN.size==='a4l';
     const pdfW=isLandscape?297:210,pdfH=isLandscape?210:297;
     const {jsPDF}=window.jspdf;
@@ -2289,7 +2289,7 @@ async function signSaveAs(fmt){
   try{
     const canvas=await html2canvas(offscreen,{scale:1,useCORS:true,allowTaint:true,backgroundColor:SIGN.bg,logging:false,width:EW,height:EH,x:0,y:0,scrollX:0,scrollY:0});
     const isJpg=fmt==='jpg';
-    const dataUrl=isJpg?canvas.toDataURL('image/jpeg',0.95):canvas.toDataURL('image/png');
+    const dataUrl=isJpg?canvas.toDataURL('image/jpeg',1.0):canvas.toDataURL('image/png');
     const a=document.createElement('a');
     a.download='signage_'+SIGN.size+'_'+EW+'x'+EH+'.'+(isJpg?'jpg':'png');
     a.href=dataUrl; document.body.appendChild(a); a.click(); document.body.removeChild(a);
