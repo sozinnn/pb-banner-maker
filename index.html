@@ -1250,21 +1250,18 @@ qs('#zoomOut').addEventListener('click',()=>{S.zoom=Math.max(S.zoom-0.1,0.4);qs(
 async function squareSaveAs(fmt){
   qs('#loadOverlay').classList.remove('hidden');
 
-  // 네이버 탭에서 저장 시 pageSquare를 잠깐 표시
-  const pageSquare=qs('#pageSquare');
-  const wasHidden=!pageSquare.classList.contains('on');
-  if(wasHidden){
-    pageSquare.style.position='fixed';
-    pageSquare.style.left='-9999px';
-    pageSquare.style.display='grid';
-    render();
-    await new Promise(r=>setTimeout(r,80));
-  }
-
   const banner=qs('#banner');
   const EXPORT=1080, PREVIEW=520, ratio=EXPORT/PREVIEW;
 
   qsa('.rh,.img-sel-border').forEach(el=>el.style.display='none');
+
+  // 화면 밖으로 이동해서 번쩍임 방지
+  const origPos=banner.style.position;
+  const origLeft=banner.style.left;
+  const origTop=banner.style.top;
+  banner.style.position='fixed';
+  banner.style.left='-'+(EXPORT+200)+'px';
+  banner.style.top='0';
 
   const origT=banner.style.transform;
   banner.style.transform='none';
@@ -1312,17 +1309,12 @@ async function squareSaveAs(fmt){
   }catch(e){toast('❌ 저장 중 오류가 발생했습니다');console.error(e);}
 
   banner.style.transform=origT; banner.style.width='520px'; banner.style.height='520px';
+  banner.style.position=origPos; banner.style.left=origLeft; banner.style.top=origTop;
   t.style.fontSize=oFS; t.style.letterSpacing=oLS; wrap.style.padding=oPad;
   if(zone){zone.style.top=oZT;zone.style.height=oZH;}
   const pan2=qs('#bImgPan');
   if(pan2){pan2.style.width=oPW;pan2.style.height=oPH;pan2.style.left=oPL;pan2.style.top=oPTop;}
   qsa('.rh,.img-sel-border').forEach(el=>el.style.display='');
-
-  if(wasHidden){
-    pageSquare.style.position='';
-    pageSquare.style.left='';
-    pageSquare.style.display='';
-  }
 
   render();
   qs('#loadOverlay').classList.add('hidden');
@@ -1765,7 +1757,7 @@ function signRender(){
   const iFW=SIGN.itemFontWeight;
   const iAlign=SIGN.itemAlign;
   const logoSize=SIGN.size==='a4p'?Math.round(90*r):Math.round(80*r);
-  const logoPadB=SIGN.size==='a4p'?Math.round(110*r):Math.round(90*r);
+  const logoPadB=SIGN.size==='a4p'?Math.round(120*r):Math.round(100*r);
   const divW=Math.max(1,Math.round(2*r));
 
   let html='<div style="position:absolute;inset:0;overflow:hidden;box-sizing:border-box">';
@@ -2135,7 +2127,9 @@ async function signSavePDF(){
   const tFW=SIGN.titleFontWeight,tAlign=SIGN.titleAlign,tPadTop=SIGN.titlePadTop,tPadSide=SIGN.titlePadSide;
   const iSize=SIGN.itemFontSize,iLS=SIGN.itemLetterSpacing.toFixed(1),iLH=SIGN.itemLineHeight;
   const iFW=SIGN.itemFontWeight,iAlign=SIGN.itemAlign;
-  const logoSize=SIGN.size==='a4p'?90:80,logoPadB=SIGN.size==='a4p'?110:90,divW=2,pW=EW,pH=EH;
+  const logoSize=SIGN.size==='a4p'?90:80;
+  const logoPadB=SIGN.size==='a4p'?120:100;
+  const divW=2,pW=EW,pH=EH;
   let html='<div style="position:absolute;inset:0;overflow:hidden;box-sizing:border-box">';
   if(SIGN.size==='a4l'){
     const lIconSize=650,lIconCX=tPadSide+lIconSize/2,lIconCY=tPadTop+lIconSize/2;
@@ -2156,7 +2150,7 @@ async function signSavePDF(){
       else if(SIGN.bulletType==='bullet'){const d=Math.round(iSize*0.18);html+='<div style="width:'+d+'px;height:'+d+'px;border-radius:50%;background:'+SIGN.textColor+';flex-shrink:0;margin-top:'+Math.round(iSize*iLH*0.4)+'px"></div>';}
       html+='<div style="font-size:'+iSize+'px;font-weight:'+iFW+';letter-spacing:'+iLS+'px;color:'+SIGN.textColor+';line-height:'+iLH+';word-break:keep-all;text-align:'+iAlign+'">'+item.split('\n').join('<br>')+'</div></div>';
     });
-    html+='<div style="flex:1"></div><div style="text-align:right;padding-bottom:90px"><img src="'+SIGN_LOGO_URL+'" style="height:'+logoSize+'px;width:auto" /></div></div>';
+    html+='</div><div style="position:absolute;bottom:0;right:0;padding-bottom:'+logoPadB+'px;padding-right:'+tPadSide+'px"><img src="'+SIGN_LOGO_URL+'" style="height:'+logoSize+'px;width:auto" /></div>';
   } else {
     const iconSize=650,titleLines=titleText.split('\n').length,titleBlockH=Math.round(tSize*tLH*titleLines);
     const iconCX=pW-tPadSide-iconSize/2,iconCY=tPadTop+titleBlockH+60,radius=iconSize/2-8;
@@ -2176,7 +2170,7 @@ async function signSavePDF(){
       else if(SIGN.bulletType==='bullet'){const d=Math.round(iSize*0.18);html+='<div style="width:'+d+'px;height:'+d+'px;border-radius:50%;background:'+SIGN.textColor+';flex-shrink:0;margin-top:'+Math.round(iSize*iLH*0.4)+'px"></div>';}
       html+='<div style="font-size:'+iSize+'px;font-weight:'+iFW+';letter-spacing:'+iLS+'px;color:'+SIGN.textColor+';line-height:'+iLH+';word-break:keep-all;text-align:'+iAlign+'">'+item.split('\n').join('<br>')+'</div></div>';
     });
-    html+='<div style="flex:1"></div><div style="text-align:center;padding-bottom:110px"><img src="'+SIGN_LOGO_URL+'" style="height:'+logoSize+'px;width:auto" /></div></div>';
+    html+='</div><div style="position:absolute;bottom:0;left:0;right:0;text-align:center;padding-bottom:'+logoPadB+'px"><img src="'+SIGN_LOGO_URL+'" style="height:'+logoSize+'px;width:auto" /></div>';
   }
   html+='</div>';
   offscreen.innerHTML=html;
@@ -2228,7 +2222,7 @@ async function signSaveAs(fmt){
   const iFW=SIGN.itemFontWeight;
   const iAlign=SIGN.itemAlign;
   const logoSize=SIGN.size==='a4p'?90:80;
-  const logoPadB=SIGN.size==='a4p'?110:90;
+  const logoPadB=SIGN.size==='a4p'?120:100;
   const divW=2;
   const pW=EW, pH=EH;
 
@@ -2263,9 +2257,8 @@ async function signSaveAs(fmt){
       html+='<div style="font-size:'+iSize+'px;font-weight:'+iFW+';letter-spacing:'+iLS+'px;color:'+SIGN.textColor+';line-height:'+iLH+';word-break:keep-all;text-align:'+iAlign+'">'+item.split('\n').join('<br>')+'</div>';
       html+='</div>';
     });
-    html+='<div style="flex:1"></div>';
-    html+='<div style="text-align:right;padding-bottom:90px"><img src="'+SIGN_LOGO_URL+'" style="height:'+logoSize+'px;width:auto" /></div>';
     html+='</div>';
+    html+='<div style="position:absolute;bottom:0;right:0;padding-bottom:'+logoPadB+'px;padding-right:'+tPadSide+'px"><img src="'+SIGN_LOGO_URL+'" style="height:'+logoSize+'px;width:auto" /></div>';
   } else {
     const iconSize=650;
     const titleLines=titleText.split('\n').length;
@@ -2297,9 +2290,8 @@ async function signSaveAs(fmt){
       html+='<div style="font-size:'+iSize+'px;font-weight:'+iFW+';letter-spacing:'+iLS+'px;color:'+SIGN.textColor+';line-height:'+iLH+';word-break:keep-all;text-align:'+iAlign+'">'+item.split('\n').join('<br>')+'</div>';
       html+='</div>';
     });
-    html+='<div style="flex:1"></div>';
-    html+='<div style="text-align:center;padding-bottom:110px"><img src="'+SIGN_LOGO_URL+'" style="height:'+logoSize+'px;width:auto" /></div>';
     html+='</div>';
+    html+='<div style="position:absolute;bottom:0;left:0;right:0;text-align:center;padding-bottom:'+logoPadB+'px"><img src="'+SIGN_LOGO_URL+'" style="height:'+logoSize+'px;width:auto" /></div>';
   }
   html+='</div>';
   offscreen.innerHTML=html;
