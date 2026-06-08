@@ -359,6 +359,7 @@ textarea.tinput:focus{border-color:var(--accent);background:var(--surface3)}
           <button class="chip" data-v="800">ExtraBold</button>
           <button class="chip" data-v="900">Black</button>
         </div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:6px;letter-spacing:-.2px;line-height:1.6">강조하고 싶은 텍스트는 <b style="color:var(--text-soft)">**</b> 와 <b style="color:var(--text-soft)">**</b> 사이에 넣으세요<br><span style="color:var(--text-muted)">예) 안녕 **하세요** → 안녕 <b>하세요</b></span></div>
       </div>
 
       <div class="field">
@@ -526,6 +527,7 @@ textarea.tinput:focus{border-color:var(--accent);background:var(--surface3)}
           <button class="chip" data-v="800">ExtraBold</button>
           <button class="chip" data-v="900">Black</button>
         </div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:6px;letter-spacing:-.2px;line-height:1.6">강조하고 싶은 텍스트는 <b style="color:var(--text-soft)">**</b> 와 <b style="color:var(--text-soft)">**</b> 사이에 넣으세요<br><span style="color:var(--text-muted)">예) 안녕 **하세요** → 안녕 <b>하세요</b></span></div>
       </div>
       <div class="field">
         <div class="field-label">가로 정렬</div>
@@ -667,6 +669,7 @@ textarea.tinput:focus{border-color:var(--accent);background:var(--surface3)}
           <button class="chip on" data-v="700">Bold</button>
           <button class="chip" data-v="900">Black</button>
         </div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:6px;letter-spacing:-.2px;line-height:1.6">강조하고 싶은 텍스트는 <b style="color:var(--text-soft)">**</b> 와 <b style="color:var(--text-soft)">**</b> 사이에 넣으세요<br><span style="color:var(--text-muted)">예) 안녕 **하세요** → 안녕 <b>하세요</b></span></div>
       </div>
       <div class="field">
         <div class="field-label">정렬</div>
@@ -748,6 +751,7 @@ textarea.tinput:focus{border-color:var(--accent);background:var(--surface3)}
           <button class="chip" data-v="600">SemiBold</button>
           <button class="chip" data-v="700">Bold</button>
         </div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:6px;letter-spacing:-.2px;line-height:1.6">강조하고 싶은 텍스트는 <b style="color:var(--text-soft)">**</b> 와 <b style="color:var(--text-soft)">**</b> 사이에 넣으세요<br><span style="color:var(--text-muted)">예) 안녕 **하세요** → 안녕 <b>하세요</b></span></div>
       </div>
       <div class="field">
         <div class="field-label">정렬</div>
@@ -820,6 +824,17 @@ textarea.tinput:focus{border-color:var(--accent);background:var(--surface3)}
 </div>
 
 <script>
+
+// ── Markdown Bold Parser ──
+function parseMdBold(text, normalWeight, color){
+  return text.replace(/\*\*(.+?)\*\*/g, function(_,m){
+    return '<span style="font-weight:700;color:'+color+'">'+m+'</span>';
+  });
+}
+function mdLines(text, normalWeight, color){
+  return text.split('\n').map(function(l){ return parseMdBold(l, normalWeight, color); }).join('<br>');
+}
+
 // ── PALETTE ──
 const PALETTE=[
   {name:'White Coffee',hex:'#E8E1D7'},{name:'Soft Blue',hex:'#AEE6ED'},
@@ -884,10 +899,10 @@ function render(){
   if(hasSqLineColors){
     t.innerHTML=sqLines.map(function(line,i){
       const c=(S.lineColors&&S.lineColors[i])||S.textColor;
-      return '<span style="display:block;color:'+c+'">'+line+'</span>';
+      return '<span style="display:block;color:'+c+'">'+parseMdBold(line,NS.fontWeight,c)+'</span>';
     }).join('');
   } else {
-    t.innerHTML=sqLines.join('<br>');
+    t.innerHTML=sqLines.map(function(l){return parseMdBold(l,S.fontWeight,S.textColor);}).join('<br>');
   }
   qs('#bTextWrap').style.padding=`${S.padTop}px ${S.padSide}px 0`;
 
@@ -1326,38 +1341,63 @@ async function squareSaveAs(fmt){
 }
 
 // NBS save with format
-function nbsSaveAs(fmt){
+async function nbsSaveAs(fmt){
+  qs('#loadOverlay').classList.remove('hidden');
   const cfg=NBS_CONFIGS[NS.mode];
   const EW=cfg.w, EH=cfg.h;
-  const lines=qs('#nbsText').value.split('\n').map(function(l){return l.trim();}).filter(function(l){return l!=='';});
+
+  const offscreen=document.createElement('div');
+  offscreen.style.cssText=`position:fixed;left:-${EW+100}px;top:0;width:${EW}px;height:${EH}px;overflow:hidden;font-family:'Pretendard',-apple-system,sans-serif;`;
+  offscreen.style.background=NS.bg;
+
+  const bg=document.createElement('div');
+  bg.style.cssText=`position:absolute;inset:0;background:${NS.bg}`;
+  offscreen.appendChild(bg);
+
+  const wrap=document.createElement('div');
+  wrap.style.cssText='position:absolute;left:0;right:0;';
+
+  const txt=document.createElement('div');
+  txt.style.fontFamily="'Pretendard',-apple-system,sans-serif";
+  txt.style.fontSize=NS.fontSize+'px';
+  txt.style.fontWeight=NS.fontWeight;
+  txt.style.textAlign=NS.textAlign;
+  txt.style.letterSpacing=NS.letterSpacing+'px';
+  txt.style.lineHeight=NS.lineHeight;
+  txt.style.color=NS.textColor;
+  txt.style.wordBreak='keep-all';
+  txt.style.whiteSpace='pre-wrap';
+
+  const nbsLines=qs('#nbsText').value.split('\n');
+  const hasLineColors=Object.keys(NS.lineColors||{}).length>0;
+  if(hasLineColors){
+    txt.innerHTML=nbsLines.map(function(line,i){
+      const c=NS.lineColors[i]||NS.textColor;
+      return '<span style="display:block;color:'+c+'">'+parseMdBold(line,NS.fontWeight,c)+'</span>';
+    }).join('');
+  } else {
+    txt.innerHTML=nbsLines.map(function(l){return parseMdBold(l,NS.fontWeight,NS.textColor);}).join('<br>');
+  }
+
+  if(NS.vertAlign==='middle'){
+    wrap.style.top='0'; wrap.style.bottom='0';
+    wrap.style.display='flex'; wrap.style.flexDirection='column'; wrap.style.justifyContent='center';
+    wrap.style.padding=`0 ${NS.padSide}px`;
+  } else if(NS.vertAlign==='bottom'){
+    wrap.style.bottom='0'; wrap.style.top='auto';
+    wrap.style.padding=`0 ${NS.padSide}px ${NS.padTop}px`;
+  } else {
+    wrap.style.top='0';
+    wrap.style.padding=`${NS.padTop}px ${NS.padSide}px 0`;
+  }
+
+  wrap.appendChild(txt);
+  offscreen.appendChild(wrap);
+  document.body.appendChild(offscreen);
+
+  await new Promise(r=>setTimeout(r,120));
   try{
-    const canvas=document.createElement('canvas');
-    canvas.width=EW; canvas.height=EH;
-    const ctx=canvas.getContext('2d');
-    ctx.fillStyle=NS.bg||'#FF6600';
-    ctx.fillRect(0,0,EW,EH);
-    const fs=NS.fontSize, lh=NS.lineHeight, fw=NS.fontWeight, ls=NS.letterSpacing;
-    ctx.fillStyle=NS.textColor||'#FFFFFF';
-    ctx.textBaseline='middle';
-    ctx.textAlign='center';
-    ctx.font=fw+' '+fs+'px Pretendard, Arial, sans-serif';
-    const lineH=Math.round(fs*lh);
-    const totalH=lineH*(lines.length-1)+fs;
-    const startY=Math.round((EH-totalH)/2)+Math.round(fs/2);
-    const cx=Math.round(EW/2);
-    lines.forEach(function(line,i){
-      const y=startY+i*lineH;
-      if(ls!==0){
-        const chars=line.split('');
-        let totalW=0;
-        const widths=chars.map(function(ch){const w=ctx.measureText(ch).width;totalW+=w+ls;return w;});
-        totalW-=ls;
-        let x=cx-totalW/2;
-        chars.forEach(function(ch,j){ctx.fillText(ch,x+widths[j]/2,y);x+=widths[j]+ls;});
-      } else {
-        ctx.fillText(line,cx,y);
-      }
-    });
+    const canvas=await html2canvas(offscreen,{scale:1,useCORS:true,allowTaint:true,backgroundColor:NS.bg,logging:false,width:EW,height:EH,x:0,y:0,scrollX:0,scrollY:0});
     const isJpg=fmt==='jpg';
     const mime=isJpg?'image/jpeg':'image/png';
     const dataUrl=isJpg?canvas.toDataURL(mime,1.0):canvas.toDataURL(mime);
@@ -1367,6 +1407,8 @@ function nbsSaveAs(fmt){
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     toast('✅ 저장 완료! ('+cfg.label+' '+(isJpg?'JPG':'PNG')+')');
   }catch(e){console.error(e);toast('❌ 저장 중 오류: '+e.message);}
+  document.body.removeChild(offscreen);
+  qs('#loadOverlay').classList.add('hidden');
 }
 
 // ── RESET ──
@@ -1467,7 +1509,7 @@ function nbsRender(){
       return '<span style="display:block;color:'+c+'">'+line+'</span>';
     }).join('');
   } else {
-    t.innerHTML=nbsLines.join('<br>');
+    t.innerHTML=nbsLines.map(function(l){return parseMdBold(l,NS.fontWeight,NS.textColor);}).join('<br>');
   }
   const wrap=qs('#nbsTextWrap');
   const fixedMargin=Math.round(40*ratio); // 고정 여백 40px
@@ -1640,7 +1682,7 @@ async function nbsSave(){
   txt.style.color=NS.textColor;
   txt.style.wordBreak='keep-all';
   txt.style.whiteSpace='pre-wrap';
-  txt.innerHTML=qs('#nbsText').value.replace(/\n/g,'<br>');
+  txt.innerHTML=qs('#nbsText').value.split('\n').map(function(l){return parseMdBold(l,NS.fontWeight,NS.textColor);}).join('<br>');
 
   if(NS.vertAlign==='middle'){
     wrap.style.top='0'; wrap.style.bottom='0';
@@ -1723,6 +1765,7 @@ const SIGN_DEFAULTS_P={
   itemFontSize:90, itemLetterSpacing:-1, itemLineHeight:1.80,
   itemFontWeight:400, itemAlign:'left', bulletType:'none',
   titleText:'제목은\n두 줄 이내',
+  items:['타이틀 Bold / 본문 Regular','본문 길어질 경우 폰트크기 줄이기'],
 };
 const SIGN_DEFAULTS_L={
   bg:'#000000', textColor:'#FFFFFF', accentColor:'#FF0000', zoom:1,
@@ -1731,6 +1774,7 @@ const SIGN_DEFAULTS_L={
   itemFontSize:90, itemLetterSpacing:-1, itemLineHeight:1.80,
   itemFontWeight:400, itemAlign:'left', bulletType:'none',
   titleText:'제목은\n두 줄 이내',
+  items:['타이틀 Bold / 본문 Regular','본문 길어질 경우 폰트크기 줄이기'],
 };
 const SIGN=Object.assign({size:'a4p'}, JSON.parse(JSON.stringify(SIGN_DEFAULTS_P)));
 
@@ -1793,7 +1837,7 @@ function signRender(){
     const lTitleTop=Math.round(tPadTop);
     const lTitleH=Math.round(lIconSize*1.0);
     html+='<div style="position:relative;height:'+(lTitleH)+'px;margin-bottom:'+Math.round(220*r)+'px;flex-shrink:0">';
-    html+='<div style="position:absolute;left:'+(lTitleLeft-tPadSide)+'px;top:0;right:0;font-size:'+tSize+'px;font-weight:'+tFW+';line-height:'+tLH+';letter-spacing:'+tLS+'px;color:'+SIGN.textColor+';word-break:keep-all;text-align:'+tAlign+'">'+titleText.split('\n').join('<br>')+'</div>';
+    html+='<div style="position:absolute;left:'+(lTitleLeft-tPadSide)+'px;top:0;right:0;font-size:'+tSize+'px;font-weight:'+tFW+';line-height:'+tLH+';letter-spacing:'+tLS+'px;color:'+SIGN.textColor+';word-break:keep-all;text-align:'+tAlign+'">'+mdLines(titleText,tFW,SIGN.textColor)+'</div>';
     html+='</div>';
 
     // divider (starts after icon area)
@@ -1814,7 +1858,7 @@ function signRender(){
       } else if(SIGN.bulletType==='bullet'){
         html+='<div style="width:'+dotSize2+'px;height:'+dotSize2+'px;border-radius:50%;background:'+SIGN.textColor+';flex-shrink:0;margin-top:'+dotMT2+'px"></div>';
       }
-      html+='<div style="font-size:'+iSize+'px;font-weight:'+iFW+';letter-spacing:'+iLS+'px;color:'+SIGN.textColor+';line-height:'+iLH+';word-break:keep-all;text-align:'+iAlign+'">'+item.split('\n').join('<br>')+'</div>';
+      html+='<div style="font-size:'+iSize+'px;font-weight:'+iFW+';letter-spacing:'+iLS+'px;color:'+SIGN.textColor+';line-height:'+iLH+';word-break:keep-all;text-align:'+iAlign+'">'+mdLines(item,iFW,SIGN.textColor)+'</div>';
       html+='</div>';
     });
     html+='</div>';
@@ -1848,7 +1892,7 @@ function signRender(){
     const iconBottom=iconCY+iconSize/2;
     const dividerGap=Math.round(200*r);
     const titleMarginBottom=Math.max(Math.round(80*r), Math.round(iconBottom - tPadTop - titleBlockH + dividerGap));
-    html+='<div style="font-size:'+tSize+'px;font-weight:'+tFW+';line-height:'+tLH+';letter-spacing:'+tLS+'px;color:'+SIGN.textColor+';word-break:keep-all;text-align:'+tAlign+';padding-right:'+titleRightPad+'px;margin-bottom:'+titleMarginBottom+'px">'+titleText.split('\n').join('<br>')+'</div>';
+    html+='<div style="font-size:'+tSize+'px;font-weight:'+tFW+';line-height:'+tLH+';letter-spacing:'+tLS+'px;color:'+SIGN.textColor+';word-break:keep-all;text-align:'+tAlign+';padding-right:'+titleRightPad+'px;margin-bottom:'+titleMarginBottom+'px">'+mdLines(titleText,tFW,SIGN.textColor)+'</div>';
     html+='<div style="height:'+divW+'px;background:'+SIGN.textColor+';opacity:0.5;margin-bottom:'+dividerGap+'px;flex-shrink:0"></div>';
 
     const dotSize=Math.round(iSize*0.18);
@@ -1864,7 +1908,7 @@ function signRender(){
       } else if(SIGN.bulletType==='bullet'){
         html+='<div style="width:'+dotSize+'px;height:'+dotSize+'px;border-radius:50%;background:'+SIGN.textColor+';flex-shrink:0;margin-top:'+dotMT+'px"></div>';
       }
-      html+='<div style="font-size:'+iSize+'px;font-weight:'+iFW+';letter-spacing:'+iLS+'px;color:'+SIGN.textColor+';line-height:'+iLH+';word-break:keep-all;text-align:'+iAlign+'">'+item.split('\n').join('<br>')+'</div>';
+      html+='<div style="font-size:'+iSize+'px;font-weight:'+iFW+';letter-spacing:'+iLS+'px;color:'+SIGN.textColor+';line-height:'+iLH+';word-break:keep-all;text-align:'+iAlign+'">'+mdLines(item,iFW,SIGN.textColor)+'</div>';
       html+='</div>';
     });
 
@@ -1958,20 +2002,22 @@ function restoreSignState(snap){
 
 qs('#signA4P').addEventListener('click',function(){
   if(SIGN.size==='a4l') SIGN_STATE_L=saveSignState();
+  else SIGN_STATE_P=saveSignState();
   SIGN.size='a4p';
   qs('#signA4P').classList.add('on'); qs('#signA4L').classList.remove('on');
   qs('#signSizeTag').textContent='A4 세로';
   if(currentTab==='sign') qs('#saveBtnLabel').textContent='저장 (A4 세로)';
-  restoreSignState(SIGN_STATE_P);
+  restoreSignState(JSON.parse(JSON.stringify(SIGN_STATE_P)));
   signRender();
 });
 qs('#signA4L').addEventListener('click',function(){
   if(SIGN.size==='a4p') SIGN_STATE_P=saveSignState();
+  else SIGN_STATE_L=saveSignState();
   SIGN.size='a4l';
   qs('#signA4L').classList.add('on'); qs('#signA4P').classList.remove('on');
   qs('#signSizeTag').textContent='A4 가로';
   if(currentTab==='sign') qs('#saveBtnLabel').textContent='저장 (A4 가로)';
-  restoreSignState(SIGN_STATE_L);
+  restoreSignState(JSON.parse(JSON.stringify(SIGN_STATE_L)));
   signRender();
 });
 
@@ -2147,13 +2193,13 @@ async function signSavePDF(){
     const bPad=Math.round((logoSize+logoPadB)*1.1);
     html+='<div style="position:absolute;inset:0;display:flex;flex-direction:column;box-sizing:border-box;overflow:hidden;padding:'+tPadTop+'px '+tPadSide+'px '+bPad+'px">';
     const lTitleLeft=tPadSide+lIconSize+200,lDivLeft=lTitleLeft-tPadSide;
-    html+='<div style="position:relative;height:'+lIconSize+'px;margin-bottom:220px;flex-shrink:0"><div style="position:absolute;left:'+lDivLeft+'px;top:0;right:0;font-size:'+tSize+'px;font-weight:'+tFW+';line-height:'+tLH+';letter-spacing:'+tLS+'px;color:'+SIGN.textColor+';word-break:keep-all;text-align:'+tAlign+'">'+titleText.split('\n').join('<br>')+'</div></div>';
+    html+='<div style="position:relative;height:'+lIconSize+'px;margin-bottom:220px;flex-shrink:0"><div style="position:absolute;left:'+lDivLeft+'px;top:0;right:0;font-size:'+tSize+'px;font-weight:'+tFW+';line-height:'+tLH+';letter-spacing:'+tLS+'px;color:'+SIGN.textColor+';word-break:keep-all;text-align:'+tAlign+'">'+mdLines(titleText,tFW,SIGN.textColor)+'</div></div>';
     html+='<div style="height:'+divW+'px;background:'+SIGN.textColor+';opacity:0.5;margin-left:'+lDivLeft+'px;margin-bottom:200px;flex-shrink:0"></div>';
     items.forEach(function(item,i){
       html+='<div style="display:flex;align-items:flex-start;gap:30px;margin-bottom:8px;flex-shrink:0;margin-left:'+lDivLeft+'px">';
       if(SIGN.bulletType==='number') html+='<div style="font-size:'+iSize+'px;font-weight:'+iFW+';color:'+SIGN.textColor+';flex-shrink:0;line-height:'+iLH+'">'+String(i+1).padStart(2,'0')+'.</div>';
       else if(SIGN.bulletType==='bullet'){const d=Math.round(iSize*0.18);html+='<div style="width:'+d+'px;height:'+d+'px;border-radius:50%;background:'+SIGN.textColor+';flex-shrink:0;margin-top:'+Math.round(iSize*iLH*0.4)+'px"></div>';}
-      html+='<div style="font-size:'+iSize+'px;font-weight:'+iFW+';letter-spacing:'+iLS+'px;color:'+SIGN.textColor+';line-height:'+iLH+';word-break:keep-all;text-align:'+iAlign+'">'+item.split('\n').join('<br>')+'</div></div>';
+      html+='<div style="font-size:'+iSize+'px;font-weight:'+iFW+';letter-spacing:'+iLS+'px;color:'+SIGN.textColor+';line-height:'+iLH+';word-break:keep-all;text-align:'+iAlign+'">'+mdLines(item,iFW,SIGN.textColor)+'</div></div>';
     });
     html+='</div><div style="position:absolute;bottom:0;right:0;padding-bottom:'+logoPadB+'px;padding-right:'+tPadSide+'px"><img src="'+SIGN_LOGO_URL+'" style="height:'+logoSize+'px;width:auto" /></div>';
   } else {
@@ -2167,13 +2213,13 @@ async function signSavePDF(){
     const bPad=Math.round((logoSize+logoPadB)*1.1);
     html+='<div style="position:absolute;inset:0;display:flex;flex-direction:column;box-sizing:border-box;overflow:hidden;padding:'+tPadTop+'px '+tPadSide+'px '+bPad+'px">';
     const iconBottom=iconCY+iconSize/2,dividerGap=200,titleMarginBottom=Math.max(80,Math.round(iconBottom-tPadTop-titleBlockH+dividerGap));
-    html+='<div style="font-size:'+tSize+'px;font-weight:'+tFW+';line-height:'+tLH+';letter-spacing:'+tLS+'px;color:'+SIGN.textColor+';word-break:keep-all;text-align:'+tAlign+';padding-right:'+(iconSize+tPadSide*0.4)+'px;margin-bottom:'+titleMarginBottom+'px">'+titleText.split('\n').join('<br>')+'</div>';
+    html+='<div style="font-size:'+tSize+'px;font-weight:'+tFW+';line-height:'+tLH+';letter-spacing:'+tLS+'px;color:'+SIGN.textColor+';word-break:keep-all;text-align:'+tAlign+';padding-right:'+(iconSize+tPadSide*0.4)+'px;margin-bottom:'+titleMarginBottom+'px">'+mdLines(titleText,tFW,SIGN.textColor)+'</div>';
     html+='<div style="height:'+divW+'px;background:'+SIGN.textColor+';opacity:0.5;margin-bottom:'+dividerGap+'px;flex-shrink:0"></div>';
     items.forEach(function(item,i){
       html+='<div style="display:flex;align-items:flex-start;gap:30px;margin-bottom:8px;flex-shrink:0">';
       if(SIGN.bulletType==='number') html+='<div style="font-size:'+iSize+'px;font-weight:'+iFW+';color:'+SIGN.textColor+';flex-shrink:0;line-height:'+iLH+'">'+String(i+1).padStart(2,'0')+'.</div>';
       else if(SIGN.bulletType==='bullet'){const d=Math.round(iSize*0.18);html+='<div style="width:'+d+'px;height:'+d+'px;border-radius:50%;background:'+SIGN.textColor+';flex-shrink:0;margin-top:'+Math.round(iSize*iLH*0.4)+'px"></div>';}
-      html+='<div style="font-size:'+iSize+'px;font-weight:'+iFW+';letter-spacing:'+iLS+'px;color:'+SIGN.textColor+';line-height:'+iLH+';word-break:keep-all;text-align:'+iAlign+'">'+item.split('\n').join('<br>')+'</div></div>';
+      html+='<div style="font-size:'+iSize+'px;font-weight:'+iFW+';letter-spacing:'+iLS+'px;color:'+SIGN.textColor+';line-height:'+iLH+';word-break:keep-all;text-align:'+iAlign+'">'+mdLines(item,iFW,SIGN.textColor)+'</div></div>';
     });
     html+='</div><div style="position:absolute;bottom:0;left:0;right:0;text-align:center;padding-bottom:'+logoPadB+'px"><img src="'+SIGN_LOGO_URL+'" style="height:'+logoSize+'px;width:auto" /></div>';
   }
@@ -2250,7 +2296,7 @@ async function signSaveAs(fmt){
     html+='<div style="position:absolute;inset:0;display:flex;flex-direction:column;box-sizing:border-box;overflow:hidden;padding:'+tPadTop+'px '+tPadSide+'px '+bPad+'px">';
     const lTitleLeft=tPadSide+lIconSize+200;
     html+='<div style="position:relative;height:'+lIconSize+'px;margin-bottom:220px;flex-shrink:0">';
-    html+='<div style="position:absolute;left:'+(lTitleLeft-tPadSide)+'px;top:0;right:0;font-size:'+tSize+'px;font-weight:'+tFW+';line-height:'+tLH+';letter-spacing:'+tLS+'px;color:'+SIGN.textColor+';word-break:keep-all;text-align:'+tAlign+'">'+titleText.split('\n').join('<br>')+'</div>';
+    html+='<div style="position:absolute;left:'+(lTitleLeft-tPadSide)+'px;top:0;right:0;font-size:'+tSize+'px;font-weight:'+tFW+';line-height:'+tLH+';letter-spacing:'+tLS+'px;color:'+SIGN.textColor+';word-break:keep-all;text-align:'+tAlign+'">'+mdLines(titleText,tFW,SIGN.textColor)+'</div>';
     html+='</div>';
     const lDivLeft=lTitleLeft-tPadSide;
     html+='<div style="height:'+divW+'px;background:'+SIGN.textColor+';opacity:0.5;margin-left:'+lDivLeft+'px;margin-bottom:200px;flex-shrink:0"></div>';
@@ -2259,7 +2305,7 @@ async function signSaveAs(fmt){
       html+='<div style="display:flex;align-items:flex-start;gap:30px;margin-bottom:8px;flex-shrink:0;margin-left:'+lDivLeft+'px">';
       if(SIGN.bulletType==='number') html+='<div style="font-size:'+iSize+'px;font-weight:'+iFW+';letter-spacing:'+iLS+'px;color:'+SIGN.textColor+';flex-shrink:0;line-height:'+iLH+'">'+String(i+1).padStart(2,'0')+'.</div>';
       else if(SIGN.bulletType==='bullet') html+='<div style="width:'+dotSize2+'px;height:'+dotSize2+'px;border-radius:50%;background:'+SIGN.textColor+';flex-shrink:0;margin-top:'+dotMT2+'px"></div>';
-      html+='<div style="font-size:'+iSize+'px;font-weight:'+iFW+';letter-spacing:'+iLS+'px;color:'+SIGN.textColor+';line-height:'+iLH+';word-break:keep-all;text-align:'+iAlign+'">'+item.split('\n').join('<br>')+'</div>';
+      html+='<div style="font-size:'+iSize+'px;font-weight:'+iFW+';letter-spacing:'+iLS+'px;color:'+SIGN.textColor+';line-height:'+iLH+';word-break:keep-all;text-align:'+iAlign+'">'+mdLines(item,iFW,SIGN.textColor)+'</div>';
       html+='</div>';
     });
     html+='</div>';
@@ -2285,14 +2331,14 @@ async function signSaveAs(fmt){
     const iconBottom=iconCY+iconSize/2;
     const dividerGap=200;
     const titleMarginBottom=Math.max(80,Math.round(iconBottom-tPadTop-titleBlockH+dividerGap));
-    html+='<div style="font-size:'+tSize+'px;font-weight:'+tFW+';line-height:'+tLH+';letter-spacing:'+tLS+'px;color:'+SIGN.textColor+';word-break:keep-all;text-align:'+tAlign+';padding-right:'+titleRightPad+'px;margin-bottom:'+titleMarginBottom+'px">'+titleText.split('\n').join('<br>')+'</div>';
+    html+='<div style="font-size:'+tSize+'px;font-weight:'+tFW+';line-height:'+tLH+';letter-spacing:'+tLS+'px;color:'+SIGN.textColor+';word-break:keep-all;text-align:'+tAlign+';padding-right:'+titleRightPad+'px;margin-bottom:'+titleMarginBottom+'px">'+mdLines(titleText,tFW,SIGN.textColor)+'</div>';
     html+='<div style="height:'+divW+'px;background:'+SIGN.textColor+';opacity:0.5;margin-bottom:'+dividerGap+'px;flex-shrink:0"></div>';
     const dotSize=Math.round(iSize*0.18), dotMT=Math.round(iSize*iLH*0.4);
     items.forEach(function(item,i){
       html+='<div style="display:flex;align-items:flex-start;gap:30px;margin-bottom:8px;flex-shrink:0">';
       if(SIGN.bulletType==='number') html+='<div style="font-size:'+iSize+'px;font-weight:'+iFW+';letter-spacing:'+iLS+'px;color:'+SIGN.textColor+';flex-shrink:0;line-height:'+iLH+'">'+String(i+1).padStart(2,'0')+'.</div>';
       else if(SIGN.bulletType==='bullet') html+='<div style="width:'+dotSize+'px;height:'+dotSize+'px;border-radius:50%;background:'+SIGN.textColor+';flex-shrink:0;margin-top:'+dotMT+'px"></div>';
-      html+='<div style="font-size:'+iSize+'px;font-weight:'+iFW+';letter-spacing:'+iLS+'px;color:'+SIGN.textColor+';line-height:'+iLH+';word-break:keep-all;text-align:'+iAlign+'">'+item.split('\n').join('<br>')+'</div>';
+      html+='<div style="font-size:'+iSize+'px;font-weight:'+iFW+';letter-spacing:'+iLS+'px;color:'+SIGN.textColor+';line-height:'+iLH+';word-break:keep-all;text-align:'+iAlign+'">'+mdLines(item,iFW,SIGN.textColor)+'</div>';
       html+='</div>';
     });
     html+='</div>';
